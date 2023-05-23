@@ -1,9 +1,19 @@
-ls -1 | xargs -I {} -n 1 curl -X 'POST' \
-  'http://prod-lnx-1:8081/service/rest/v1/components?repository=rpm-release' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -H 'NX-ANTI-CSRF-TOKEN: 0.839427094682698' \
-  -H 'X-Nexus-UI: true' \
-  -F 'yum.directory=Directory' \
-  -F 'yum.asset=@{}' \
-  -F 'yum.asset.filename={}'
+#Upload
+
+find /tmp/RPMs/ -type f | xargs -I {} -n 1 bash -c 'echo "$(basename {})"' | \
+xargs -I {} -n 1 curl -u admin --request 'POST'   'http://nexus_address:8081/service/rest/v1/components?repository=rpm-release'  \
+-H 'accept: application/json' \
+-H 'Content-Type: multipart/form-data' \
+-H 'X-Nexus-UI: true' \
+-F 'yum.directory=Directory' \
+-F 'yum.asset=@{}' \
+-F 'yum.asset.filename={}'
+
+#Download
+
+Dnf download --disablerepo=* --enablerepo=nexus cups
+yumdownloader --disablerepo=* --enablerepo=nexus cups
+
+#Delete
+
+curl --request DELETE -u "admin:admin" http://nexus_address:8081/repository/rpm-release/package_path
