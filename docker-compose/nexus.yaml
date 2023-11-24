@@ -1,0 +1,43 @@
+version: '3'
+services:
+  nexus:
+    container_name: nexus
+    user: "nexus:nexus"
+    image: sonatype/nexus3
+    volumes:
+      - nexus-data:/nexus-data
+      - ./nexus-data/blobs/:/opt/sonatype/sonatype-work/nexus3/blobs/
+      - ./nexus-data/keystores/node/:/opt/sonatype/sonatype-work/nexus3/keystores/node
+#       Следующая строка комментируется после выполнения обновления (bak-файлы)
+#      - ./nexus-data/bak/:/opt/sonatype/sonatype-work/nexus3/restore-from-backup
+    ports:
+      - 8081:8081
+    networks:
+      nexus_nginx:
+        ipv4_address: 172.18.0.2
+
+  nginx:
+    container_name: nginx
+    image: nginx
+    volumes:
+      - ./nexus.conf:/etc/nginx/conf.d/nexus.conf
+      - ./fullchain.pem:/etc/nginx/ssl/fullchain.pem
+      - ./privkey.pem:/etc/nginx/ssl/privkey.pem
+    ports:
+      - 443:443
+    depends_on:
+      - nexus
+    networks:
+      nexus_nginx:
+        ipv4_address: 172.18.0.3
+
+volumes:
+  nexus-data: {}
+
+
+networks:
+  nexus_nginx:
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+
