@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Укажите путь к директории, в которой нужно удалить файлы и папки
+directory="/путь/к/директории"
+
+# Получаем список всех файлов и папок в указанной директории
+files=$(find "$directory")
+
+# Создаем ассоциативный массив, в котором ключом является дата создания файла или папки
+declare -A creation_dates
+
+# Проходимся по каждому файлу или папке
+for file in $files; do
+    # Получаем дату создания файла или папки
+    creation_date=$(stat -c %y "$file" | cut -d ' ' -f 1)
+    
+    # Добавляем файл или папку в ассоциативный массив с ключом - датой создания
+    creation_dates["$creation_date"]+=" $file"
+done
+
+# Проходимся по каждой дате создания в ассоциативном массиве
+for date in "${!creation_dates[@]}"; do
+    # Получаем список файлов и папок с одинаковой датой создания
+    files_with_same_creation_date=${creation_dates["$date"]}
+    
+    # Если количество файлов и папок больше 1, то удаляем их
+    if [[ $(echo "$files_with_same_creation_date" | wc -w) -gt 1 ]]; then
+        rm -rf $files_with_same_creation_date
+    fi
+done
